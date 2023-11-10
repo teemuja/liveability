@@ -10,8 +10,7 @@
 	"dockerFile": "../Dockerfile",
 
 	"extensions": [
-		"ms-python.python",
-		"ms-toolsai.jupyter"
+		"ms-python.python"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
