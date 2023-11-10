@@ -21,6 +21,7 @@ scikit-learn
 
 #viz
 plotly
+streamlit-keplergl
 
 #notebook
 ipywidgets
