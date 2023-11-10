@@ -21,8 +21,3 @@ scikit-learn
 
 #viz
 plotly
-
-#notebook
-ipywidgets
-nbformat
-pydot
