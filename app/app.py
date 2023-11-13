@@ -14,7 +14,7 @@ df['geometry'] = df['WKT'].apply(loads)
 gdf = gpd.GeoDataFrame(df,geometry="geometry")
 
 #selectors
-cols = gdf.drop(columns=["WKT","geometry"]).columns.tolist()
+cols = gdf.drop(columns=["YKR_ID","WKT","geometry"]).columns.tolist()
 defaults = ['Attractive','Walkabilit']
 mycols = st.multiselect("Select values to study",options=cols,default=defaults,max_selections=4)
 
