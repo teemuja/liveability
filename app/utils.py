@@ -242,6 +242,13 @@ def scatter(df,cols):
             row=(i - 1) // num_cols + 1,
             col=(i - 1) % num_cols + 1
         )
+        # Trendline
+        m, b = np.polyfit(df[col1], df[col2], 1)  # Linear fit (slope m, intercept b)
+        fig.add_trace(
+            go.Scatter(x=df[col1], y=m*df[col1] + b, mode='lines', name=f'Trendline for {col1} vs {col2}'),
+            row=(i - 1) // num_cols + 1,
+            col=(i - 1) % num_cols + 1
+        )
 
     # Update layout
     fig.update_layout(height=600, width=1200, title_text="Scatter plot")
