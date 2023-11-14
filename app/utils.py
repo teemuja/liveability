@@ -161,13 +161,16 @@ def facet_plots(gdf,cols):
         # Define the maximum value for normalization
         max_value = gdf[column].max()
 
-        # Create a custom color scale for this column based on quartiles
+        # Define discrete color scale based on quartiles
         custom_color_scale = [
             [0, bin_colors['bottom']],
+            [q1 / max_value, bin_colors['bottom']],  # end of first quartile
             [q1 / max_value, bin_colors['low']],
+            [q2 / max_value, bin_colors['low']],    # end of second quartile
             [q2 / max_value, bin_colors['high']],
+            [q3 / max_value, bin_colors['high']],   # end of third quartile
             [q3 / max_value, bin_colors['top']],
-            [1.0, bin_colors['top']]
+            [1.0, bin_colors['top']]                # end of fourth quartile
         ]
 
         # Create the choropleth trace
