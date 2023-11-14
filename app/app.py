@@ -31,10 +31,10 @@ if df_to_study == "Indexes":
     mycols = st.multiselect("Select values to study",options=cols,default=defaults,max_selections=4)
     gdf = gdf_indexes.copy()
     #rename cols
-    json_path = Path(__file__).parent / 'cols_dict.json'
-    with open(json_path) as json_file:
-        cols_dict = json.load(json_file)
-    gdf.rename(columns=cols_dict,inplace=True)
+    #json_path = Path(__file__).parent / 'cols_dict.json'
+    #with open(json_path) as json_file:
+    #    cols_dict = json.load(json_file)
+    #gdf.rename(columns=cols_dict,inplace=True)
 else:
     cols = gdf_GWR.drop(columns=["YKR_ID","WKT","geometry"]).columns.tolist()
     defaults = [cols[0],cols[1]]
