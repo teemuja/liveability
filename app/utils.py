@@ -152,41 +152,27 @@ def facet_plots(gdf,cols):
                     specs=[[{"type": "choroplethmapbox"} for _ in range(num_cols)]],
                     horizontal_spacing=0.02)
     
-    # Loop through each column to create a choropleth map
     for i, column in enumerate(columns_to_plot):
-
         # Calculate quartiles
         q1, q2, q3 = gdf[column].quantile([0.25, 0.5, 0.75])
 
-        # Define the maximum value for normalization
-        max_value = gdf[column].max()
+        # Assign a class based on quartiles
+        gdf[f"{column}_class"] = pd.cut(gdf[column], bins=[-float('inf'), q1, q2, q3, float('inf')], 
+                                        labels=['bottom', 'low', 'high', 'top'])
 
-        # Define discrete color scale based on quartiles
-        custom_color_scale = [
-            [0, bin_colors['bottom']],
-            [q1 / max_value, bin_colors['bottom']],  # end of first quartile
-            [q1 / max_value, bin_colors['low']],
-            [q2 / max_value, bin_colors['low']],    # end of second quartile
-            [q2 / max_value, bin_colors['high']],
-            [q3 / max_value, bin_colors['high']],   # end of third quartile
-            [q3 / max_value, bin_colors['top']],
-            [1.0, bin_colors['top']]                # end of fourth quartile
-        ]
+        # Map class labels to colors
+        class_to_color = {label: bin_colors[label] for label in ['bottom', 'low', 'high', 'top']}
 
         # Create the choropleth trace
         trace = go.Choroplethmapbox(
             geojson=gdf.geometry.__geo_interface__, 
             locations=gdf.index, 
-            z=gdf[column],
-            colorscale=custom_color_scale,
-            zmin=gdf[column].min(),
-            zmax=gdf[column].max(),
-            showscale=True,
-            colorbar=dict(thickness=20, tickvals=[q1,q2,q3]),
+            z=gdf[f"{column}_class"].map(class_to_color),  # Use the class for color
+            text=gdf[column],  # Original value as hover text
+            showscale=False,  # Disable the color scale
             subplot=f'mapbox{i+1}'
         )
 
-        # Add the trace to the subplot
         fig.add_trace(trace, row=1, col=i+1)
 
     # Set the mapbox configuration for each subplot
