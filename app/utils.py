@@ -144,8 +144,9 @@ def facet_plots(gdf,cols,opacity=0.3):
     columns_to_plot = cols
 
     bin_colors = {
-        'bottom':'antiquewhite',
-        'low':'burlywood',
+        'bottom':'skyblue',
+        'low':'powderblue',
+        'middle':'ghostwhite',
         'high':'olive',
         'top':'green'
     }
@@ -156,7 +157,7 @@ def facet_plots(gdf,cols,opacity=0.3):
     if num_cols == 1:
         for i, column in enumerate(columns_to_plot):
             # Calculate quartiles
-            q1, q2, q3 = gdf[column].quantile([0.25, 0.5, 0.75])
+            q1, q2, q3, q4 = gdf[column].quantile([0.25, 0.5, 0.75, 0.90])
 
             # Classify each data point into a category based on its quartile
             def classify_to_category(value):
@@ -165,6 +166,8 @@ def facet_plots(gdf,cols,opacity=0.3):
                 elif q1 > value <= q2:
                     return 'low'
                 elif q2 > value <= q3:
+                    return 'middle'
+                elif q3 > value <= q4:
                     return 'high'
                 else:
                     return 'top'
@@ -172,22 +175,23 @@ def facet_plots(gdf,cols,opacity=0.3):
             gdf[f'{column}_category'] = gdf[column].apply(classify_to_category)
 
             # Create a color map based on the categories
-            color_map = {category: bin_colors[category] for category in ['bottom', 'low', 'high', 'top']}
+            color_map = {category: bin_colors[category] for category in ['bottom', 'low', 'middle', 'high', 'top']}
 
             # Convert the GeoDataFrame to a format compatible with Plotly Express
             geojson = gdf.geometry.__geo_interface__
 
             # Create the choropleth map
+            color_col = f'{column}_category'
             lat = gdf.unary_union.centroid.y
             lon = gdf.unary_union.centroid.x
             fig = px.choropleth_mapbox(gdf, 
                                     geojson=geojson,
                                     locations=gdf.index, 
-                                    color=f'{column}_category',
+                                    color=color_col,
                                     color_discrete_map=color_map,
-                                    #featureidkey="properties.<your_id_key>",  # Replace <your_id_key> with the appropriate property key
+                                    category_orders= {color_col:['bottom','low','middle','high','top']},
                                     mapbox_style="carto-positron",
-                                    zoom=10, center={"lat": lat, "lon": lon},  # Replace with your map center coordinates
+                                    zoom=10, center={"lat": lat, "lon": lon},
                                     opacity=opacity
                                     )
             #trace = trace_fig.data[0]
