@@ -178,7 +178,7 @@ def facet_plots(gdf,cols):
             colorscale=custom_color_scale,
             zmin=gdf[column].min(),
             zmax=gdf[column].max(),
-            showscale=False,
+            showscale=True,
             #colorbar=dict(thickness=20, tickvals=[q1,q2,q3]),
             subplot=f'mapbox{i+1}'
         )
