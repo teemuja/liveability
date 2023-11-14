@@ -15,8 +15,9 @@ st.markdown("Authors: Tianqi Wang, Teemu Jama, Henrikki Tenkanen @[Aalto GIST La
 df = utils.bucket_handler(operation="download",folder_name='ndp/liv', file_name='liveability_4326.csv')
 df['geometry'] = df['WKT'].apply(loads)
 gdf = gpd.GeoDataFrame(df,geometry="geometry")
-#rename by json
-with open(Path(__file__).parent / 'cols_dict.json') as json_file:
+#rename
+json_path = Path(__file__).parent / 'cols_dict.json'
+with open(json_path) as json_file:
     cols_dict = json.load(json_file)
 gdf.rename(columns=cols_dict,inplace=True)
 
