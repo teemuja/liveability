@@ -139,58 +139,114 @@ def plot_quantiles(gdf,col=None):
     return fig
 
 
-def facet_plots(gdf,cols):
+def facet_plots(gdf,cols,opacity=0.3):
     #cols
     columns_to_plot = cols
+
+    bin_colors = {
+        'bottom':'antiquewhite',
+        'low':'burlywood',
+        'high':'olive',
+        'top':'green'
+    }
 
     # Define the number of columns for the subplots
     num_cols = len(columns_to_plot)
 
-    # Create a subplot for each column
-    fig = make_subplots(rows=1, cols=num_cols, 
-                    subplot_titles=columns_to_plot,
-                    specs=[[{"type": "choroplethmapbox"} for _ in range(num_cols)]],
-                    horizontal_spacing=0.02)
+    if num_cols == 1:
+        for i, column in enumerate(columns_to_plot):
+            # Calculate quartiles
+            q1, q2, q3 = gdf[column].quantile([0.25, 0.5, 0.75])
+
+            # Classify each data point into a category based on its quartile
+            def classify_to_category(value):
+                if value <= q1:
+                    return 'bottom'
+                elif q1 > value <= q2:
+                    return 'low'
+                elif q2 > value <= q3:
+                    return 'high'
+                else:
+                    return 'top'
+
+            gdf[f'{column}_category'] = gdf[column].apply(classify_to_category)
+
+            # Create a color map based on the categories
+            color_map = {category: bin_colors[category] for category in ['bottom', 'low', 'high', 'top']}
+
+            # Convert the GeoDataFrame to a format compatible with Plotly Express
+            geojson = gdf.geometry.__geo_interface__
+
+            # Create the choropleth map
+            lat = gdf.unary_union.centroid.y
+            lon = gdf.unary_union.centroid.x
+            fig = px.choropleth_mapbox(gdf, 
+                                    geojson=geojson,
+                                    locations=gdf.index, 
+                                    color=f'{column}_category',
+                                    color_discrete_map=color_map,
+                                    #featureidkey="properties.<your_id_key>",  # Replace <your_id_key> with the appropriate property key
+                                    mapbox_style="carto-positron",
+                                    zoom=10, center={"lat": lat, "lon": lon},  # Replace with your map center coordinates
+                                    opacity=opacity
+                                    )
+            #trace = trace_fig.data[0]
+            #fig.add_trace(trace, row=1, col=i+1)
+
+    elif num_cols > 1:
+        # Create a subplot for each column
+        fig = make_subplots(rows=1, cols=num_cols, 
+                        subplot_titles=columns_to_plot,
+                        specs=[[{"type": "choroplethmapbox"} for _ in range(num_cols)]],
+                        horizontal_spacing=0.02)
+
+        for i, column in enumerate(columns_to_plot):
+            # Calculate quartiles
+            q1, q2, q3 = gdf[column].quantile([0.25, 0.5, 0.75])
+
+            # Define categorical labels for each quartile
+            quartile_labels = ['Q1', 'Q2', 'Q3', 'Q4']
+
+            # Map values to quartile labels
+            gdf[f'{column}_quartile'] = pd.cut(gdf[column], 
+                                            bins=[-float('inf'), q1, q2, q3, float('inf')], 
+                                            labels=quartile_labels,
+                                            include_lowest=True)
+
+            # Define colors for each quartile label
+            colorscale = [[0, bin_colors['bottom']], [0.33, bin_colors['low']], 
+                        [0.66, bin_colors['high']], [1.0, bin_colors['top']]]
+
+            # Create the choropleth trace
+            trace = go.Choroplethmapbox(
+                geojson=gdf.geometry.__geo_interface__, 
+                locations=gdf.index, 
+                z=gdf[f'{column}_quartile'].cat.codes,  # Use category codes for plotting
+                marker=dict(opacity=opacity),
+                colorscale=colorscale,
+                zmin=0,
+                zmax=3,
+                showscale=False,
+                subplot=f'mapbox{i+1}'
+            )
+
+            # Add the trace to the subplot
+            fig.add_trace(trace, row=1, col=i+1)
+        
+        # custom legend
+        for i, (label, color) in enumerate(bin_colors.items()):
+            fig.add_trace(go.Scatter(
+                x=[None], y=[None], mode='markers',
+                marker=dict(size=10, color=color),
+                legendgroup='group', showlegend=True, name=label
+            ))
     
-    for i, column in enumerate(columns_to_plot):
-
-        # Calculate quartiles
-        q1, q2, q3 = gdf[column].quantile([0.25, 0.5, 0.75])
-
-        # Define the maximum value for normalization
-        max_value = gdf[column].max()
-
-        # Create a custom color scale for this column based on quartiles
-        custom_color_scale = [
-            [0, bin_colors['bottom']],
-            [q1 / max_value, bin_colors['low']],
-            [q2 / max_value, bin_colors['high']],
-            [q3 / max_value, bin_colors['top']],
-            [1.0, bin_colors['top']]
-        ]
-
-        # Create the choropleth trace
-        trace = go.Choroplethmapbox(
-            geojson=gdf.geometry.__geo_interface__, 
-            locations=gdf.index, 
-            z=gdf[column],
-            colorscale=custom_color_scale,
-            zmin=gdf[column].min(),
-            zmax=gdf[column].max(),
-            showscale=False,
-            #colorbar=dict(thickness=20, tickvals=[q1,q2,q3]),
-            subplot=f'mapbox{i+1}'
-        )
-
-        # Add the trace to the subplot
-        fig.add_trace(trace, row=1, col=i+1)
 
     # Set the mapbox configuration for each subplot
     for i in range(len(columns_to_plot)):
         fig.update_layout(
-            **{f'mapbox{i+1}': dict(
-                center=dict(lat=gdf.unary_union.centroid.y, lon=gdf.unary_union.centroid.x), # Adjust the center as needed
-                style='carto-positron',
+            **{f'mapbox{i+1}': dict(accesstoken=mapbox_key, style=mystyle,
+                center=dict(lat=gdf.unary_union.centroid.y, lon=gdf.unary_union.centroid.x),
                 zoom=9
             )}
         )
