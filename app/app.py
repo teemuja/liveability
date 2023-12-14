@@ -20,7 +20,7 @@ def get_gdf(folder_name='ndp/liv', file_name='liveability_4326.csv'):
     return gdf
 
 gdf_indexes = get_gdf(folder_name='ndp/liv', file_name='liveability_4326.csv')
-gdf_GWR = get_gdf(folder_name='ndp/liv', file_name='GWR.csv')
+gdf_GWR = get_gdf(folder_name='ndp/liv', file_name='GWR2.csv')
 
 #selectors
 df_to_study = st.radio('Select data to study',options=['Indexes','GWR'])
